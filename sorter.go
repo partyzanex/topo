@@ -84,7 +84,7 @@ func (ts *TopologicalSorter) PushAll(entities ...SortableEntity) (err error) {
 }
 
 // getting children entities by parent id
-func (ts TopologicalSorter) Child(parent int) ([]interface{}, error) {
+func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 	if storage, ok := ts.storage[parent].(vertexStore); ok {
 		if n := len(storage); n > 0 {
 			results := make([]interface{}, n)
