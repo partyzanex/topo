@@ -78,6 +78,64 @@ var cats = []*category{
 		ParentID: 2,
 		Name:     "Category 12",
 	},
+	{
+		ID:   21,
+		Name: "Category 1",
+	},
+	{
+		ID:       22,
+		ParentID: 1,
+		Name:     "Category 2",
+	},
+	{
+		ID:   23,
+		Name: "Category 3",
+	},
+	{
+		ID:       25,
+		ParentID: 3,
+		Name:     "Category 5",
+	},
+	{
+		ID:       24,
+		ParentID: 1,
+		Name:     "Category 4",
+	},
+	{
+		ID:       27,
+		ParentID: 25,
+		Name:     "Category 7",
+	},
+	{
+		ID:       26,
+		ParentID: 22,
+		Name:     "Category 6",
+	},
+	{
+		ID:       28,
+		ParentID: 22,
+		Name:     "Category 8",
+	},
+	{
+		ID:       29,
+		ParentID: 2,
+		Name:     "Category 9",
+	},
+	{
+		ID:       210,
+		ParentID: 8,
+		Name:     "Category 10",
+	},
+	{
+		ID:       211,
+		ParentID: 8,
+		Name:     "Category 11",
+	},
+	{
+		ID:       212,
+		ParentID: 22,
+		Name:     "Category 12",
+	},
 }
 
 func TestTopologicalSorter_Push(t *testing.T) {
@@ -117,12 +175,12 @@ func TestTopologicalSorter_Child(t *testing.T) {
 		}
 	}
 
-	child, err := sorter.Child(0)
+	child, err := sorter.Child(nil)
 	if err != nil {
 		t.Fatal(errors.Wrap(err, "0"))
 	}
 
-	if len(child) != 2 {
+	if len(child) != 4 {
 		t.Fatal("error 2")
 	}
 
@@ -131,7 +189,7 @@ func TestTopologicalSorter_Child(t *testing.T) {
 		t.Fatal("error category pointer")
 	}
 
-	if cat.ID != 1 && cat.ID != 3 {
+	if cat.ID != 1 && cat.ID != 3 && cat.ID != 21 && cat.ID != 23 {
 		t.Fatal("error 3")
 	}
 
@@ -140,12 +198,71 @@ func TestTopologicalSorter_Child(t *testing.T) {
 		t.Fatal(errors.Wrap(err, "0"))
 	}
 
-	if len(child) != 4 {
+	if len(child) != 5 {
 		t.Fatal("error 4")
 	}
 
 	cat, ok = child[0].(*category)
 	if !ok {
 		t.Fatal("error category pointer 2")
+	}
+}
+
+func BenchmarkNew(b *testing.B) {
+	for i := 0; i < b.N; i ++ {
+		New()
+	}
+}
+
+func BenchmarkTopologicalSorter_Push(b *testing.B) {
+	id := 1
+	var lastID int
+
+	sorter := New()
+
+	for i := 0; i < b.N; i++ {
+		sorter.Push(&category{
+			ID:       id,
+			ParentID: lastID,
+			Name:     "Test",
+		})
+
+		if id%5 == 0 {
+			lastID = id
+		}
+		id++
+	}
+}
+
+func BenchmarkTopologicalSorter_PushAll(b *testing.B) {
+	//sorter := New()
+	id := 1
+	var lastID int
+
+	var items []*category
+	for i := 0; i < 24; i++ {
+		items = append(items, &category{
+			ID:       id,
+			ParentID: lastID,
+			Name:     "Test",
+		})
+
+		if id%5 == 0 {
+			lastID = id
+		}
+		id++
+	}
+
+	for i := 0; i < b.N; i++ {
+		sorter := New()
+		err := sorter.PushAll(
+			items[0], items[1], items[2], items[3], items[4], items[5],
+			items[6], items[7], items[8], items[9], items[10], items[11],
+			items[12], items[13], items[14], items[15], items[16], items[17],
+			items[18], items[19], items[20], items[21], items[22], items[23],
+		)
+		if err != nil && err != ErrVertexDefined {
+			b.Fatal(err)
+		}
 	}
 }

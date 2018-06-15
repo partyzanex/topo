@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ErrVertexDefined = errors.New("vertex is defined")
+
 // interface for sortable entities
 type SortableEntity interface {
 	// returns entity id
@@ -31,7 +33,7 @@ func New() *TopologicalSorter {
 }
 
 // checking and extracting self and parent values from entity
-func (TopologicalSorter) extract(entity SortableEntity) (parent, self interface{}, ok bool) {
+func extract(entity SortableEntity) (parent, self interface{}, ok bool) {
 	parent = entity.Parent()
 	self = entity.Self()
 
@@ -51,7 +53,7 @@ func (ts *TopologicalSorter) Exists(parent, self int) bool {
 
 // adding entities for sorting
 func (ts *TopologicalSorter) Push(entity SortableEntity) error {
-	parent, self, ok := ts.extract(entity)
+	parent, self, ok := extract(entity)
 	if !ok {
 		return errors.New("entity is not valid")
 	}
@@ -59,7 +61,7 @@ func (ts *TopologicalSorter) Push(entity SortableEntity) error {
 	storage, ok := ts.storage[parent].(vertexStore)
 	if ok {
 		if _, ok = storage[self]; ok {
-			return errors.New("vertex is defined")
+			return ErrVertexDefined
 		}
 	} else {
 		ts.storage[parent] = make(vertexStore)
@@ -74,8 +76,8 @@ func (ts *TopologicalSorter) Push(entity SortableEntity) error {
 
 // adding from entities slice for sorting
 func (ts *TopologicalSorter) PushAll(entities ...SortableEntity) (err error) {
-	for _, entity := range entities {
-		if err = ts.Push(entity); err != nil {
+	for i := range entities {
+		if err = ts.Push(entities[i]); err != nil {
 			return err
 		}
 	}
