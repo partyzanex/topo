@@ -1,8 +1,7 @@
-package topo
+package topo_test
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
+	"github.com/partyzanex/topo"
 	"testing"
 )
 
@@ -139,25 +138,25 @@ var cats = []*category{
 }
 
 func TestTopologicalSorter_Push(t *testing.T) {
-	sorter := New()
+	sorter := topo.New()
 
 	for _, cat := range cats {
 		if err := sorter.Push(cat); err != nil {
-			t.Fatal(err)
+			t.Fatalf("pushing failed: %s", err)
 		}
 	}
 }
 
 func TestTopologicalSorter_Exists(t *testing.T) {
-	sorter := New()
+	sorter := topo.New()
 
 	for _, cat := range cats {
 		if err := sorter.Push(cat); err != nil {
-			t.Fatal(err)
+			t.Fatalf("pushing failed: %s", err)
 		}
 
 		if !sorter.Exists(cat.ParentID, cat.ID) {
-			t.Fatal(fmt.Sprintf("exists error on %d:%d", cat.ParentID, cat.ID))
+			t.Fatalf("exists error on %d:%d", cat.ParentID, cat.ID)
 		}
 	}
 
@@ -167,21 +166,21 @@ func TestTopologicalSorter_Exists(t *testing.T) {
 }
 
 func TestTopologicalSorter_Child(t *testing.T) {
-	sorter := New()
+	sorter := topo.New()
 
 	for _, cat := range cats {
 		if err := sorter.Push(cat); err != nil {
-			t.Fatal(err)
+			t.Fatalf("pushing failed: %s", err)
 		}
 	}
 
 	child, err := sorter.Child(nil)
 	if err != nil {
-		t.Fatal(errors.Wrap(err, "0"))
+		t.Fatalf("getting childs failed: %s", err)
 	}
 
 	if len(child) != 4 {
-		t.Fatal("error 2")
+		t.Fatalf("wrong count of childs: except %d, got %d", 4, len(child))
 	}
 
 	cat, ok := child[0].(*category)
@@ -190,27 +189,22 @@ func TestTopologicalSorter_Child(t *testing.T) {
 	}
 
 	if cat.ID != 1 && cat.ID != 3 && cat.ID != 21 && cat.ID != 23 {
-		t.Fatal("error 3")
+		t.Fatal("invalid elements")
 	}
 
 	child, err = sorter.Child(2)
 	if err != nil {
-		t.Fatal(errors.Wrap(err, "0"))
+		t.Fatalf("getting childs failed: %s", err)
 	}
 
 	if len(child) != 5 {
-		t.Fatal("error 4")
-	}
-
-	cat, ok = child[0].(*category)
-	if !ok {
-		t.Fatal("error category pointer 2")
+		t.Fatalf("wrong count of childs: except %d, got %d", 5, len(child))
 	}
 }
 
 func BenchmarkNew(b *testing.B) {
-	for i := 0; i < b.N; i ++ {
-		New()
+	for i := 0; i < b.N; i++ {
+		topo.New()
 	}
 }
 
@@ -218,7 +212,7 @@ func BenchmarkTopologicalSorter_Push(b *testing.B) {
 	id := 1
 	var lastID int
 
-	sorter := New()
+	sorter := topo.New()
 
 	for i := 0; i < b.N; i++ {
 		sorter.Push(&category{
@@ -254,14 +248,14 @@ func BenchmarkTopologicalSorter_PushAll(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		sorter := New()
+		sorter := topo.New()
 		err := sorter.PushAll(
 			items[0], items[1], items[2], items[3], items[4], items[5],
 			items[6], items[7], items[8], items[9], items[10], items[11],
 			items[12], items[13], items[14], items[15], items[16], items[17],
 			items[18], items[19], items[20], items[21], items[22], items[23],
 		)
-		if err != nil && err != ErrVertexDefined {
+		if err != nil && err != topo.ErrVertexDefined {
 			b.Fatal(err)
 		}
 	}

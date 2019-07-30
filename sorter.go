@@ -101,5 +101,5 @@ func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("key %d is not found", parent))
+	return nil, errors.New(fmt.Sprintf("key %v is not found", parent))
 }
