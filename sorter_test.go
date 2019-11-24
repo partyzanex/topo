@@ -1,6 +1,7 @@
 package topo_test
 
 import (
+	"github.com/partyzanex/testutils"
 	"github.com/partyzanex/topo"
 	"testing"
 )
@@ -8,6 +9,7 @@ import (
 type category struct {
 	ID, ParentID int
 	Name         string
+	Children     []*category
 }
 
 func (c category) Self() interface{} {
@@ -16,6 +18,12 @@ func (c category) Self() interface{} {
 
 func (c category) Parent() interface{} {
 	return c.ParentID
+}
+
+func (c *category) SetChildren(children interface{}) {
+	if ch, ok := children.([]*category); ok {
+		c.Children = ch
+	}
 }
 
 var cats = []*category{
@@ -174,7 +182,7 @@ func TestTopologicalSorter_Child(t *testing.T) {
 		}
 	}
 
-	child, err := sorter.Child(nil)
+	child, err := sorter.Child(0)
 	if err != nil {
 		t.Fatalf("getting childs failed: %s", err)
 	}
@@ -214,6 +222,7 @@ func BenchmarkTopologicalSorter_Push(b *testing.B) {
 
 	sorter := topo.New()
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sorter.Push(&category{
 			ID:       id,
@@ -247,6 +256,7 @@ func BenchmarkTopologicalSorter_PushAll(b *testing.B) {
 		id++
 	}
 
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sorter := topo.New()
 		err := sorter.PushAll(
@@ -258,5 +268,23 @@ func BenchmarkTopologicalSorter_PushAll(b *testing.B) {
 		if err != nil && err != topo.ErrVertexDefined {
 			b.Fatal(err)
 		}
+	}
+}
+
+func BenchmarkTopologicalSorter_Child(b *testing.B) {
+	sorter := topo.New()
+
+	for _, cat := range cats {
+		if err := sorter.Push(cat); err != nil {
+			b.Fatalf("pushing failed: %s", err)
+		}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		id := testutils.RandInt(1, 220)
+		b.StartTimer()
+		_, _ = sorter.Child(id)
 	}
 }

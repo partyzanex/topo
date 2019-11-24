@@ -14,6 +14,9 @@ type SortableEntity interface {
 
 	// returns id of parent entity
 	Parent() interface{}
+
+	// set children elements
+	SetChildren(interface{})
 }
 
 // map for entities
@@ -93,7 +96,10 @@ func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 
 			i := 0
 			for _, item := range storage {
-				results[i] = item
+				result := item.(SortableEntity)
+				children, _ := ts.Child(result.Self())
+				result.SetChildren(children)
+				results[i] = result
 				i++
 			}
 
