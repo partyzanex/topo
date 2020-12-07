@@ -1,7 +1,6 @@
 package topo
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 )
@@ -107,8 +106,4 @@ func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("key %v is not found", parent))
-}
-
-func (ts TopologicalSorter) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ts.storage)
 }

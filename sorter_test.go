@@ -153,6 +153,11 @@ func TestTopologicalSorter_Push(t *testing.T) {
 			t.Fatalf("pushing failed: %s", err)
 		}
 	}
+
+	//b, err := json.Marshal(sorter)
+	//testutils.Err(t, "json.Marshal(sorter)", err)
+	//
+	//_ = b
 }
 
 func TestTopologicalSorter_Exists(t *testing.T) {
