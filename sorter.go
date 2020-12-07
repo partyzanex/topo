@@ -1,41 +1,40 @@
 package topo
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 )
 
 var ErrVertexDefined = errors.New("vertex is defined")
 
-// interface for sortable entities
+// SortableEntity interface for sortable entities
 type SortableEntity interface {
 	// returns entity id
 	Self() interface{}
-
 	// returns id of parent entity
 	Parent() interface{}
-
 	// set children elements
 	SetChildren(interface{})
 }
 
-// map for entities
+// vertexStore is a map for entities
 type vertexStore map[interface{}]interface{}
 
-// service for sorting and searching entities
+// TopologicalSorter represents service for sorting and searching entities
 type TopologicalSorter struct {
 	// private storage
 	storage vertexStore
 }
 
-// constructor
+// New is a constructor for TopologicalSorter
 func New() *TopologicalSorter {
 	return &TopologicalSorter{
 		storage: make(vertexStore),
 	}
 }
 
-// checking and extracting self and parent values from entity
+// extract a checking and extracting self and parent values from entity
 func extract(entity SortableEntity) (parent, self interface{}, ok bool) {
 	parent = entity.Parent()
 	self = entity.Self()
@@ -43,7 +42,7 @@ func extract(entity SortableEntity) (parent, self interface{}, ok bool) {
 	return parent, self, parent != self
 }
 
-// check for exists by parent and self values
+// Exists checks for exists by parent and self values
 func (ts *TopologicalSorter) Exists(parent, self int) bool {
 	if storage, ok := ts.storage[parent]; ok {
 		if _, ok := storage.(vertexStore)[self]; ok {
@@ -54,7 +53,7 @@ func (ts *TopologicalSorter) Exists(parent, self int) bool {
 	return false
 }
 
-// adding entities for sorting
+// Push adds entities for sorting
 func (ts *TopologicalSorter) Push(entity SortableEntity) error {
 	parent, self, ok := extract(entity)
 	if !ok {
@@ -77,7 +76,7 @@ func (ts *TopologicalSorter) Push(entity SortableEntity) error {
 	return nil
 }
 
-// adding from entities slice for sorting
+// PushAll adds from entities slice for sorting
 func (ts *TopologicalSorter) PushAll(entities ...SortableEntity) (err error) {
 	for i := range entities {
 		if err = ts.Push(entities[i]); err != nil {
@@ -88,7 +87,7 @@ func (ts *TopologicalSorter) PushAll(entities ...SortableEntity) (err error) {
 	return nil
 }
 
-// getting children entities by parent id
+// Child returns children entities by parent id
 func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 	if storage, ok := ts.storage[parent].(vertexStore); ok {
 		if n := len(storage); n > 0 {
@@ -108,4 +107,8 @@ func (ts TopologicalSorter) Child(parent interface{}) ([]interface{}, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("key %v is not found", parent))
+}
+
+func (ts TopologicalSorter) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ts.storage)
 }
